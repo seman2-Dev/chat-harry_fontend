@@ -1,0 +1,29 @@
+{
+  "name": "cat_harry",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "db:start": "mkdir -p .mongodb-data && mongod --dbpath .mongodb-data --bind_ip 127.0.0.1 --port 27017 --fork --logpath .mongodb-data/mongod.log",
+    "db:stop": "mongod --dbpath .mongodb-data --shutdown"
+  },
+  "dependencies": {
+    "better-auth": "^1.7.14",
+    "mongodb": "^7.8.0",
+    "next": "16.4.3",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "sonner": "^2.0.8",
+    "swiper": "^14.4.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/turbopack": "^4",
+    "babel-plugin-react-compiler": "1.0.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.3",
+    "tailwindcss": "^4"
+  }
+}
