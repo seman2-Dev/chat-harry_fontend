@@ -1,29 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import BookingModal from "@/components/studios/BookingModal";
-
-const SAMPLE_REVIEWS = [
-  {
-    name: "Ava Rodriguez",
-    rating: 5,
-    text: "Exactly as pictured — load-in was smooth and the host had the space warm and ready. We'll book again for our next lookbook.",
-    date: "Oct 2026",
-  },
-  {
-    name: "Marcus Webb",
-    rating: 5,
-    text: "Great natural light in the morning hours. Plenty of power drops and the parking made carting gear painless.",
-    date: "Sep 2026",
-  },
-  {
-    name: "Lina Petrova",
-    rating: 4,
-    text: "Solid space for a half-day shoot. Wish there were a few more stools, but the host was responsive and flexible on pickup time.",
-    date: "Sep 2026",
-  },
-];
+import { useAuth } from "@/context/AuthContext";
 
 function StarRow({ rating }) {
   return (
@@ -83,11 +65,40 @@ function CheckIcon({ className = "" }) {
 export default function StudioDetails({ studio }) {
   const [activeImage, setActiveImage] = useState(0);
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const router = useRouter();
+  const { user } = useAuth();
   const gallery = studio.gallery?.length > 0 ? studio.gallery : [studio.image];
-  const reviews =
-    studio.reviewCount > 0
-      ? SAMPLE_REVIEWS.slice(0, Math.min(3, studio.reviewCount))
-      : [];
+
+  useEffect(() => {
+    let ignore = false;
+    fetch(`/api/studios/${studio.id}/reviews`)
+      .then((response) => response.ok ? response.json() : { reviews: [] })
+      .then((data) => { if (!ignore) setReviews(data.reviews ?? []); })
+      .catch(() => { if (!ignore) setReviews([]); });
+    return () => { ignore = true; };
+  }, [studio.id]);
+
+  async function submitReview(event) {
+    event.preventDefault();
+    setReviewSubmitting(true);
+    const response = await fetch(`/api/studios/${studio.id}/reviews`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rating: reviewRating, text: reviewText }),
+    }).catch(() => null);
+    setReviewSubmitting(false);
+    if (!response) return toast.error("Network error — please try again.");
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return toast.error(data.error || "Could not submit your review.");
+    setReviews((current) => [data.review, ...current]);
+    setReviewText("");
+    router.refresh();
+    toast.success("Thanks for sharing your experience.");
+  }
 
   return (
     <>
@@ -202,20 +213,20 @@ export default function StudioDetails({ studio }) {
               <ul className="mt-4 space-y-4">
                 {reviews.map((review) => (
                   <li
-                    key={review.name}
+                    key={review._id}
                     className="rounded-2xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-900/60"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/20 text-sm font-bold text-amber-700 dark:text-amber-400">
-                          {review.name.charAt(0)}
+                          {(review.userName || "C").charAt(0)}
                         </span>
                         <div>
                           <p className="text-sm font-semibold text-zinc-900 dark:text-white">
-                            {review.name}
+                            {review.userName || "Creator"}
                           </p>
                           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                            {review.date}
+                            {new Date(review.createdAt).toLocaleDateString(undefined, { month: "short", year: "numeric" })}
                           </p>
                         </div>
                       </div>
@@ -231,6 +242,36 @@ export default function StudioDetails({ studio }) {
               <p className="mt-4 rounded-2xl border border-dashed border-zinc-300 px-5 py-8 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
                 No reviews yet — be the first to book and leave one.
               </p>
+            )}
+            {user && (
+              <form onSubmit={submitReview} className="mt-5 rounded-2xl border border-zinc-200 p-5 dark:border-zinc-800">
+                <h3 className="font-semibold text-zinc-900 dark:text-white">Share your experience</h3>
+                <div className="mt-3 flex items-center gap-3">
+                  <label htmlFor="review-rating" className="text-sm text-zinc-600 dark:text-zinc-400">Rating</label>
+                  <select
+                    id="review-rating"
+                    value={reviewRating}
+                    onChange={(event) => setReviewRating(Number(event.target.value))}
+                    className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"
+                  >
+                    {[5, 4, 3, 2, 1].map((value) => <option key={value} value={value}>{value} stars</option>)}
+                  </select>
+                </div>
+                <textarea
+                  value={reviewText}
+                  onChange={(event) => setReviewText(event.target.value)}
+                  minLength={8}
+                  maxLength={1200}
+                  required
+                  rows={3}
+                  placeholder="What should other creators know about this space?"
+                  className="mt-3 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"
+                />
+                <button disabled={reviewSubmitting} className="mt-3 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-zinc-950 disabled:opacity-60">
+                  {reviewSubmitting ? "Posting…" : "Post review"}
+                </button>
+                <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">Reviews are available after a completed booking.</p>
+              </form>
             )}
           </div>
         </div>
