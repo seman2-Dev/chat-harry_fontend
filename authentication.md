@@ -2,19 +2,26 @@
 
 StudioSpace uses [Better Auth](https://www.better-auth.com/) 1.7.x with MongoDB.
 
+**Current integration:** Express in `../cat_harry_backend` owns `/api/auth/*`; this app proxies
+that path to the API. Put Google credentials in the backend `.env` (`GOOGLE_CLIENT_ID` /
+`GOOGLE_CLIENT_SECRET`, or the `BETTER_AUTH_GOOGLE_*` aliases). Set backend
+`BETTER_AUTH_URL=http://localhost:3000` and include that origin in `CLIENT_ORIGINS`. Google
+Cloud must allow `http://localhost:3000/api/auth/callback/google` as an authorized redirect URI.
+
 ## What is already implemented (verified end-to-end)
 
 | Piece | File(s) | Status |
 | --- | --- | --- |
-| Server config (MongoDB adapter, `minPasswordLength: 6`, `autoSignIn: false`, conditional Google, `nextCookies`) | `src/lib/auth.js` | ✅ |
-| Auth HTTP routes (`/api/auth/*`) | `src/app/api/auth/[...all]/route.js` | ✅ |
+| Server config (MongoDB adapter, `minPasswordLength: 6`, `autoSignIn: false`, conditional Google) | `../cat_harry_backend/src/auth.js` | ✅ |
+| Auth HTTP routes (`/api/auth/*`) | `../cat_harry_backend/src/app.js` | ✅ |
 | React client (`useSession`, `signIn`, `signUp`, `signOut`) | `src/lib/auth-client.js` | ✅ |
 | Session context (`user`, `isPending`, `logout`) | `src/context/AuthContext.jsx` | ✅ |
 | Header: pending skeleton, avatar dropdown, async logout | `src/components/shared/Header.jsx` | ✅ |
 | Login form (Email, Password, Forgot Password, Login, Register link, Google) | `src/app/login/page.js` | ✅ |
 | Register form (Name, Email, Photo URL, Password + client rules, Google) | `src/app/register/page.js` | ✅ |
 | Metadata for auth pages | `src/app/login/layout.js`, `src/app/register/layout.js` | ✅ |
-| Env template | `.env.example` → copy to `.env.local` | ✅ |
+| Client/API env | `.env.local` (`API_URL`, shared DB and auth secret) | ✅ |
+| Google provider credentials | `../cat_harry_backend/.env` | ✅ |
 | Local MongoDB | `npm run db:start` / `npm run db:stop` | ✅ |
 
 Verified with `curl` against a running server:
@@ -38,20 +45,21 @@ Password: Studio123
 
 ## Remaining tasks (ordered)
 
-### 1. Google OAuth credentials (blocking real social login)
+### 1. Google OAuth provider setup
 
 1. <https://console.cloud.google.com> → **APIs & Services → OAuth consent screen** → External → fill app name (`StudioSpace`), support email, save.
 2. **Credentials → Create credentials → OAuth client ID → Web application**.
 3. Authorized JavaScript origins: `http://localhost:3000` (and your production URL later).
 4. Authorized redirect URIs: `http://localhost:3000/api/auth/callback/google` (and `https://<prod-url>/api/auth/callback/google` later).
-5. Copy Client ID + Client Secret into `.env.local`:
+5. Put the Client ID and Client Secret in the backend `.env`:
    ```bash
-   GOOGLE_CLIENT_ID=....apps.googleusercontent.com
-   GOOGLE_CLIENT_SECRET=GOCSPX-...
+   BETTER_AUTH_GOOGLE_CLIENT_ID=....apps.googleusercontent.com
+   BETTER_AUTH_GOOGLE_CLIENT_SECRET=GOCSPX-...
    ```
-6. Restart the dev server. Test: **Login → Continue with Google** → Google consent → back on `/` with the avatar in the header. The "isn't configured yet" toast must disappear.
+6. Restart the Express API. Test: **Login → Continue with Google** → Google consent → back on `/` with the avatar in the header.
 
-> The Google provider is only registered in `src/lib/auth.js` when both env vars are non-empty, so nothing breaks while they are missing.
+The API must use the same OAuth client ID and secret that are configured in Google Cloud. The
+callback URL is based on the backend `BETTER_AUTH_URL`, even though `/api/auth` is proxied by Next.
 
 ### 2. Private-route protection (needed for the CRUD / dashboard section)
 
@@ -135,8 +143,7 @@ if (!session) redirect("/login");          // only when definitely logged out
 ### 3. Protecting data mutations (Challenge 1)
 
 - Cookies are already `HttpOnly` (verified via curl cookie jar) — JavaScript cannot read the token. That alone is the answer to "what is the biggest challenge keeping user credentials safe"; the second half is:
-- Every server mutation (`app/api/**/route.js` or server action) must call `auth.api.getSession({ headers: await headers() })` and return `401` when null, e.g. adding/deleting studios or creating bookings.
-- Better Auth's `nextCookies` plugin is last in the chain — keep it there; it enables setting session cookies from server actions.
+- Every server mutation in the Express API must call `requireAuth` and return `401` when there is no Better Auth session.
 
 ### 4. Deliberately skipped per rubric — enable only after grading
 
