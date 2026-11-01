@@ -89,13 +89,20 @@ export default function RegisterPage() {
     if (Object.keys(nextErrors).length > 0) return;
 
     setSubmitting(true);
-    const { error } = await authClient.signUp.email({
-      name: form.name.trim(),
-      email: form.email.trim(),
-      password: form.password,
-      image: form.photoUrl.trim(),
-    });
-    setSubmitting(false);
+    let error;
+    try {
+      ({ error } = await authClient.signUp.email({
+        name: form.name.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        image: form.photoUrl.trim(),
+      }));
+    } catch {
+      toast.error("Unable to reach the registration service. Check your connection and try again.");
+      return;
+    } finally {
+      setSubmitting(false);
+    }
 
     if (error) {
       toast.error(error.message || "Registration failed. Please try again.");
@@ -107,17 +114,22 @@ export default function RegisterPage() {
 
   async function handleGoogleRegister() {
     setSubmitting(true);
-    const { error } = await authClient.signIn.social({
-      provider: "google",
-      callbackURL: "/",
-    });
-    setSubmitting(false);
-    if (error) {
-      toast.error(
-        error.code === "PROVIDER_NOT_FOUND"
-          ? "Google sign-in isn't configured yet — see authentication.md."
-          : error.message || "Google sign-in failed."
-      );
+    try {
+      const { error } = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      });
+      if (error) {
+        toast.error(
+          error.code === "PROVIDER_NOT_FOUND"
+            ? "Google sign-in isn't configured yet."
+            : error.message || "Google sign-in failed."
+        );
+      }
+    } catch {
+      toast.error("Unable to start Google sign-in. Check your connection and try again.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
