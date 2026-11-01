@@ -1,10 +1,7 @@
-// Studio data layer. Mock rows below stand in for the `studios` MongoDB
-// collection so every page renders before the DB is seeded. getAllStudios()
-// prefers the real collection once studios are written via CRUD.
+// Studio data layer. Server-rendered pages read the Express API; these mock
+// rows keep the catalog usable when the API is empty or unavailable.
 
 import { connection } from "next/server";
-import { ObjectId } from "mongodb";
-import { withDb } from "@/lib/db";
 import { AMENITY_OPTIONS } from "@/data/amenities";
 
 // Re-exported for server components that already import from this module.
@@ -236,6 +233,74 @@ export const allStudios = [
     amenities: ["Easels & Tables", "Natural Light", "Kitchen", "Wi-Fi"],
     host: { name: "Jamie Park", email: "jamie.ceramiclightroom@example.com", avatar: null },
   },
+  {
+    id: "softbox-corner-studio",
+    title: "Softbox Corner Studio",
+    category: "Photo Studio",
+    hourlyRate: 40,
+    securityDeposit: 100,
+    maxCapacity: 6,
+    rating: 4.8,
+    reviewCount: 14,
+    location: "Boston, MA",
+    image: "/images/studios/product-studio.jpg",
+    gallery: ["/images/studios/product-studio.jpg", "/images/hero/cyc-studio.jpg"],
+    alt: "Compact product photography studio with a tabletop set and softbox lights",
+    overview: "A flexible tabletop studio with adjustable softboxes and clean backdrops for product, food, and catalog photography.",
+    amenities: ["Softbox Lighting", "Natural Light", "Wi-Fi", "Parking"],
+    host: { name: "Avery Brooks", email: "avery.softbox@example.com", avatar: null },
+  },
+  {
+    id: "cedar-podcast-room",
+    title: "Cedar Podcast Room",
+    category: "Podcast Lounge",
+    hourlyRate: 34,
+    securityDeposit: 75,
+    maxCapacity: 5,
+    rating: 4.7,
+    reviewCount: 9,
+    location: "Minneapolis, MN",
+    image: "/images/categories/podcast-rooms.jpg",
+    gallery: ["/images/categories/podcast-rooms.jpg", "/images/studios/podcast-lounge.jpg"],
+    alt: "Podcast microphone and headphones in a sound-treated recording room",
+    overview: "A quiet recording room with broadcast microphones, monitoring headphones, and acoustic treatment for interviews and voice work.",
+    amenities: ["Podcast Mics", "Headphones", "Soundproofing", "Wi-Fi"],
+    host: { name: "Morgan Ellis", email: "morgan.cedarroom@example.com", avatar: null },
+  },
+  {
+    id: "violet-hour-mix-suite",
+    title: "Violet Hour Mix Suite",
+    category: "Music Suite",
+    hourlyRate: 60,
+    securityDeposit: 180,
+    maxCapacity: 6,
+    rating: 4.9,
+    reviewCount: 21,
+    location: "Atlanta, GA",
+    image: "/images/hero/control-room.jpg",
+    gallery: ["/images/hero/control-room.jpg", "/images/studios/music-suite.jpg"],
+    alt: "Music mixing suite with studio monitors, acoustic panels, and a mixing desk",
+    overview: "A treated mixing room with accurate nearfield monitors, a spacious console, and a comfortable setup for focused production sessions.",
+    amenities: ["Soundproofing", "Studio Monitors", "Wi-Fi", "Kitchen"],
+    host: { name: "Jordan Miles", email: "jordan.violethour@example.com", avatar: null },
+  },
+  {
+    id: "open-floor-maker-studio",
+    title: "Open Floor Maker Studio",
+    category: "Art Workshop",
+    hourlyRate: 38,
+    securityDeposit: 100,
+    maxCapacity: 14,
+    rating: null,
+    reviewCount: 0,
+    location: "Philadelphia, PA",
+    image: "/images/categories/art-workshops.jpg",
+    gallery: ["/images/categories/art-workshops.jpg", "/images/hero/cyc-studio.jpg"],
+    alt: "Bright art workshop with a spacious worktable and pottery tools",
+    overview: "An adaptable maker space with washable tables, open floor area, and natural light for small classes, crafts, and creative projects.",
+    amenities: ["Easels & Tables", "Natural Light", "Kitchen", "Parking"],
+    host: { name: "Casey Nguyen", email: "casey.openfloor@example.com", avatar: null },
+  },
 ];
 
 export function normalizeStudio(doc) {
@@ -266,13 +331,15 @@ export function normalizeStudio(doc) {
   };
 }
 
-async function fetchStudiosFromDb(filter = {}, { sort, limit = 60 } = {}) {
-  return withDb(async (db) => {
-    let cursor = db.collection("studios").find(filter);
-    if (sort) cursor = cursor.sort(sort);
-    const docs = await cursor.limit(limit).toArray();
-    return docs.map(normalizeStudio);
+const API_URL = (process.env.API_URL || "http://localhost:5000").replace(/\/$/, "");
+
+async function fetchStudiosFromApi(path = "") {
+  const response = await fetch(`${API_URL}/api/studios${path}`, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(3000),
   });
+  if (!response.ok) return null;
+  return response.json();
 }
 
 export async function getAllStudios() {
@@ -280,10 +347,10 @@ export async function getAllStudios() {
   // instead of being frozen into a prerendered page.
   await connection();
   try {
-    const dbStudios = await fetchStudiosFromDb();
-    if (dbStudios.length > 0) return dbStudios;
+    const data = await fetchStudiosFromApi("?limit=100");
+    if (data?.studios?.length > 0) return data.studios.map(normalizeStudio);
   } catch {
-    // MongoDB offline or empty → fall back to the local sample data.
+    // API unavailable or empty → fall back to the local sample data.
   }
   return allStudios;
 }
@@ -292,13 +359,10 @@ export async function getFeaturedStudios() {
   await connection();
   try {
     // Rubric: newest or top-rated studios, limited to 6.
-    const dbStudios = await fetchStudiosFromDb(
-      {},
-      { sort: { createdAt: -1, rating: -1 }, limit: 6 }
-    );
-    if (dbStudios.length > 0) return dbStudios.slice(0, 6);
+    const data = await fetchStudiosFromApi("/featured");
+    if (data?.studios?.length > 0) return data.studios.slice(0, 6).map(normalizeStudio);
   } catch {
-    // MongoDB offline or empty → fall back to the local sample data.
+    // API unavailable or empty → fall back to the local sample data.
   }
   // Mock fallback: newest first (array order), then fill with top-rated.
   return allStudios.slice(0, 6);
@@ -306,18 +370,11 @@ export async function getFeaturedStudios() {
 
 export async function getStudioById(id) {
   await connection();
-  // Mock ids are slugs; DB ids are ObjectIds. Try the DB only for valid ids.
-  const isObjectId = ObjectId.isValid(id);
   try {
-    if (isObjectId) {
-      const [studio] = await fetchStudiosFromDb({ _id: new ObjectId(id) }, { limit: 1 });
-      if (studio) return studio;
-    } else {
-      const [studio] = await fetchStudiosFromDb({ id }, { limit: 1 });
-      if (studio) return studio;
-    }
+    const data = await fetchStudiosFromApi(`/${encodeURIComponent(id)}`);
+    if (data?.studio) return normalizeStudio(data.studio);
   } catch {
-    // MongoDB offline → fall back to the local sample data.
+    // API unavailable → fall back to the local sample data.
   }
   return allStudios.find((studio) => studio.id === id) || null;
 }
@@ -325,7 +382,8 @@ export async function getStudioById(id) {
 export async function getStudiosByOwner(ownerEmail) {
   await connection();
   try {
-    return await fetchStudiosFromDb({ ownerEmail }, { sort: { createdAt: -1 } });
+    const data = await fetchStudiosFromApi(`?owner=${encodeURIComponent(ownerEmail)}&limit=100`);
+    return (data?.studios ?? []).map(normalizeStudio);
   } catch {
     return [];
   }

@@ -17,16 +17,28 @@ const slides = [
     subtext: "Hourly rentals of pro photo studios — cyc walls, strobes, and seamless backdrops ready when you are.",
   },
   {
-    image: "/images/hero/sound-stage.jpg",
-    alt: "Film crew on a sound stage lit by a large softbox",
-    headline: "Lights, Camera, Book.",
-    subtext: "Sound stages and film sets built for crews of every size — reserve the whole floor by the hour.",
-  },
-  {
     image: "/images/hero/control-room.jpg",
-    alt: "Recording studio control room glowing with purple and blue light",
+    alt: "Recording studio control room with mixing desk, speakers, and acoustic panels",
     headline: "Hear the Difference",
     subtext: "Treat yourself to treated rooms, analog consoles, and monitors that tell the truth.",
+  },
+  {
+    image: "/images/studios/product-studio.jpg",
+    alt: "Product photography setup with camera, softboxes, and tabletop backdrop",
+    headline: "Make Every Detail Shine",
+    subtext: "Book a ready-to-shoot product studio with lighting and backdrops for your next campaign.",
+  },
+  {
+    image: "/images/categories/podcast-rooms.jpg",
+    alt: "Podcast microphone and headphones in a sound-treated recording room",
+    headline: "Find Your Voice",
+    subtext: "Step into a podcast-ready room with the microphones and sound treatment to bring your ideas to life.",
+  },
+  {
+    image: "/images/studios/vintage-keys.jpg",
+    alt: "Sunlit vintage creative studio with a retro television, plants, and comfortable seating",
+    headline: "Make Room for Ideas",
+    subtext: "Find a character-filled creative space for relaxed shoots, workshops, and collaborative projects.",
   },
 ];
 

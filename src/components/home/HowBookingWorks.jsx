@@ -15,6 +15,22 @@ const steps = [
     title: "Create & Produce",
     text: "Show up, plug in, and do your best work in a space built for creators.",
   },
+  {
+    title: "Track Your Booking",
+    text: "Check your booking status anytime and see when the host confirms your reservation.",
+  },
+  {
+    title: "Save Spaces You Love",
+    text: "Add promising studios to your wishlist so they are easy to find when your next project comes around.",
+  },
+  {
+    title: "Share Your Experience",
+    text: "After a completed booking, leave a review to help other creators choose the right space.",
+  },
+  {
+    title: "Host Your Own Space",
+    text: "Have a studio to share? Create a listing, manage booking requests, and welcome more creators.",
+  },
 ];
 
 export default function HowBookingWorks() {
@@ -33,7 +49,7 @@ export default function HowBookingWorks() {
             id="booking-heading"
             className="mt-2 text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl dark:text-white"
           >
-            From Idea to Shoot Day in Four Steps
+            From Idea to Shoot Day and Beyond
           </h2>
           <p className="mt-4 text-base leading-7 text-zinc-600 dark:text-zinc-400">
             Booking a professional studio should feel as easy as streaming a

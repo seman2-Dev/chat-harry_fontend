@@ -14,7 +14,7 @@ Next.js 16.4.3 App Router for assignment 8: rebuild it as **StudioSpace**, a pee
 
 - JavaScript only (`jsconfig.json`); no TypeScript, no tests, no typecheck script.
 - `next.config.mjs` enables `cacheComponents`, `partialPrefetching`, `reactCompiler` (babel-plugin-react-compiler), and `experimental.agentFeedback`; Tailwind v4 via the `@tailwindcss/turbopack` loader rule with `@import "tailwindcss"` + `@theme` in `src/app/globals.css`, and no `tailwind.config.js`. Path alias: `@/*` → `./src/*`.
-- Client calls its own Next route handlers in `src/app/api/**`; home/explore server components read Mongo via `src/data/studios.js` (mock fallback when the collection is empty).
+- Client API calls use Next rewrites to the Express service; home, explore, detail, and edit server components fetch studio data from that API through `src/data/studios.js` (15 local sample studios remain as a fallback).
 
 ## Commands
 

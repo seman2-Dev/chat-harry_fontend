@@ -8,7 +8,7 @@ Built with **Next.js 16 (App Router)**, **React 19**, **Tailwind CSS v4**, **Exp
 
 ## Features
 
-- **Home** — 3-slide autoplaying hero (fade), featured studios (MongoDB `limit(6)` with mock-data fallback), browse-by-category deep links, how-booking-works + host guarantee sections.
+- **Home** — 5-slide autoplaying hero (fade), featured studios (Express API `limit(6)` with mock-data fallback), browse-by-category deep links, how-booking-works + host guarantee sections.
 - **Browse studios** (`/studios`) — server-rendered grid with category/location/price filters, skeleton loader while streaming.
 - **Studio details** (`/studios/[id]`) — gallery carousel, amenities, overview, host card, persisted reviews, sticky booking sidebar; falls back to sample listings when a studio isn't in MongoDB.
 - **Book a studio** — modal collects date / start time / duration, computes total client-side, POSTs to `/api/bookings` with the studio snapshot; overlapping slots are rejected server-side.
@@ -29,7 +29,7 @@ Built with **Next.js 16 (App Router)**, **React 19**, **Tailwind CSS v4**, **Exp
 - **UI:** React 19, Tailwind CSS v4 (CSS-first `@theme` + `@custom-variant dark`), Swiper 14, Lucide icons, Sonner toasts
 - **Auth:** Better Auth 1.7 (MongoDB adapter, Express Node handler, HttpOnly sessions)
 - **API:** Express 5 routes for studios, bookings, uploads, wishlists, and reviews; proxied through Next rewrites
-- **Database:** MongoDB driver (no ODM); seed/mock studios in `src/data/studios.js` double as an offline fallback
+- **Database:** MongoDB driver (no ODM); frontend studio reads use the Express API, and seed/mock studios in `src/data/studios.js` provide an offline fallback
 
 ## API routes
 
@@ -98,7 +98,7 @@ src/
     shared/                 # Header (with ThemeToggle), Footer, Logo, ConfirmModal, StatusBadge, EmptyState
   context/AuthContext.jsx   # useSession wrapper (user, isPending, logout)
   context/ThemeContext.jsx  # useSyncExternalStore theme store (localStorage)
-  data/studios.js           # data layer + 8 enriched seed studios (MongoDB w/ mock fallback)
+  data/studios.js           # API data layer + 15 sample studios for fallback
   data/amenities.js         # AMENITY_OPTIONS (client-safe, no mongodb import)
   lib/auth-client.js  db.js  utils.js
   proxy.js                  # private-route edge guard (cookie presence check)

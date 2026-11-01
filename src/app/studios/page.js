@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import StudiosExplorer from "@/components/studios/StudiosExplorer";
 import StudiosGridSkeleton from "@/components/studios/StudiosGridSkeleton";
-import { getAllStudios } from "@/data/studios";
+import { allStudios, getAllStudios } from "@/data/studios";
 
 export const metadata = {
   title: "Explore Studios — StudioSpace",
@@ -10,7 +10,14 @@ export const metadata = {
 };
 
 async function StudiosSection() {
-  const studios = await getAllStudios();
+  const availableStudios = await getAllStudios();
+  const existingTitles = new Set(
+    availableStudios.map((studio) => studio.title.toLowerCase())
+  );
+  const studios = [
+    ...availableStudios,
+    ...allStudios.filter((studio) => !existingTitles.has(studio.title.toLowerCase())),
+  ].slice(0, 15);
   return <StudiosExplorer studios={studios} />;
 }
 
