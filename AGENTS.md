@@ -10,23 +10,31 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Project
 
-Next.js 16.4.3 App Router scaffold (`src/app/`) for assignment 8: rebuild it as **StudioSpace**, a peer-to-peer creative workspace marketplace. The full brief is in `Requirments.md` (filename is intentionally misspelled). The app is still the default create-next-app output — most of `src/app/` will be replaced.
+Next.js 16.4.3 App Router for assignment 8: rebuild it as **StudioSpace**, a peer-to-peer creative workspace marketplace. The full brief is in `Requirments.md` (filename is intentionally misspelled).
 
 - JavaScript only (`jsconfig.json`); no TypeScript, no tests, no typecheck script.
-- `next.config.mjs` enables `cacheComponents`, `partialPrefetching`, `reactCompiler` (babel-plugin-react-compiler), and Tailwind v4 via the `@tailwindcss/turbopack` loader rule. `cacheComponents` changes data-fetching defaults — check `node_modules/next/dist/docs/` before writing data access.
-- Tailwind v4: `@import "tailwindcss"` + `@theme` in `src/app/globals.css`; there is no `tailwind.config.js`.
-- Path alias: `@/*` → `./src/*`.
+- `next.config.mjs` enables `cacheComponents`, `partialPrefetching`, `reactCompiler` (babel-plugin-react-compiler), and `experimental.agentFeedback`; Tailwind v4 via the `@tailwindcss/turbopack` loader rule with `@import "tailwindcss"` + `@theme` in `src/app/globals.css`, and no `tailwind.config.js`. Path alias: `@/*` → `./src/*`.
+- Client calls its own Next route handlers in `src/app/api/**`; home/explore server components read Mongo via `src/data/studios.js` (mock fallback when the collection is empty).
 
 ## Commands
 
 ```bash
-npm run dev    # dev server (also regenerates the agent-rules block above)
-npm run build
-npm run lint   # eslint flat config (eslint.config.mjs); the only check available
+cp .env.example .env.local && npm install
+npm run db:start   # local mongod, data in .mongodb-data/
+npm run db:stop
+npm run dev         # :3000
+npm run lint        # eslint flat config (eslint.config.mjs); the only check available
+npm run build       # no DB needed
 ```
 
-No test runner exists — verify changes with `npm run build` and `npm run lint`.
+No test runner exists — verify changes with `npm run lint && npm run build`.
+
+## Auth / UX rules (grading traps)
+
+- No `alert()`; Sonner toasts / custom modals only.
+- Logged-in users must never be bounced to Login on reload of a private route: `RequireAuth` waits for `isPending`; the proxy (`src/proxy.js`) optimistic cookie check is backed by client-side enforcement and API 401s.
+- Rubric: ≥15 client commits.
 
 ## Git
 
-The git repo root is `/home/semanto-bolbol/PH-B14` (a large course-material monorepo), not this app. The working tree contains many unrelated changes across other milestones. Always commit from this directory and stage explicit paths (`git add cat_harry/...` or paths relative to cwd) — never `git add -A` / `git add .` from the repo root.
+This folder is its own git repo root (verified via `git rev-parse --show-toplevel`), not the PH-B14 course monorepo root. The working tree contains unrelated changes across other milestones. Always commit from here and stage explicit paths — never `git add -A` / `git add .`.
