@@ -98,6 +98,27 @@ export default function MyBookingsPage() {
     );
   }
 
+  async function updateHostStatus(booking, status) {
+    const response = await fetch(`/api/bookings/${booking._id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    }).catch(() => null);
+    if (!response) {
+      toast.error("Network error — please try again.");
+      return;
+    }
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      toast.error(data.error || "Could not update the booking.");
+      return;
+    }
+    toast.success(`Booking ${status.toLowerCase()}`);
+    setBookings((prev) => prev.map((item) =>
+      item._id === booking._id ? { ...item, status } : item
+    ));
+  }
+
   return (
     <RequireAuth>
       <div className="bg-white py-12 dark:bg-zinc-950">
@@ -164,7 +185,23 @@ export default function MyBookingsPage() {
                       </p>
                     )}
                   </div>
-                  {booking.status === "Pending" && (
+                  {booking.isHost && booking.status === "Pending" ? (
+                    <button
+                      type="button"
+                      onClick={() => updateHostStatus(booking, "Confirmed")}
+                      className="shrink-0 rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-zinc-950 transition-colors hover:bg-amber-400"
+                    >
+                      Confirm Booking
+                    </button>
+                  ) : booking.isHost && booking.status === "Confirmed" ? (
+                    <button
+                      type="button"
+                      onClick={() => updateHostStatus(booking, "Completed")}
+                      className="shrink-0 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-500"
+                    >
+                      Mark Completed
+                    </button>
+                  ) : !booking.isHost && booking.status === "Pending" ? (
                     <button
                       type="button"
                       onClick={() => setPendingCancel(booking)}
@@ -172,7 +209,7 @@ export default function MyBookingsPage() {
                     >
                       Cancel Booking
                     </button>
-                  )}
+                  ) : null}
                 </li>
               ))}
             </ul>
