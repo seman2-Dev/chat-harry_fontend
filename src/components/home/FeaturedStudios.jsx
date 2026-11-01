@@ -1,7 +1,7 @@
 import Link from "next/link";
 import StudioCard from "@/components/shared/StudioCard";
 
-export default function FeaturedStudios({ studios }) {
+export default function FeaturedStudios({ studios, moreStudios = [] }) {
   return (
     <section aria-labelledby="featured-heading" className="bg-white py-20 dark:bg-zinc-950">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -26,6 +26,24 @@ export default function FeaturedStudios({ studios }) {
             <StudioCard key={studio.id} studio={studio} />
           ))}
         </div>
+
+        {moreStudios.length > 0 && (
+          <>
+            <div className="mt-16 text-center">
+              <h3 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+                More spaces to create in
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                A few more rooms and workspaces, with studio details front and center.
+              </p>
+            </div>
+            <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {moreStudios.map((studio) => (
+                <StudioCard key={studio.id} studio={studio} />
+              ))}
+            </div>
+          </>
+        )}
 
         <div className="mt-10 text-center">
           <Link

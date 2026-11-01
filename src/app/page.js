@@ -3,7 +3,7 @@ import FeaturedStudios from "@/components/home/FeaturedStudios";
 import HeroSlider from "@/components/home/HeroSlider";
 import HostGuarantee from "@/components/home/HostGuarantee";
 import HowBookingWorks from "@/components/home/HowBookingWorks";
-import { getFeaturedStudios } from "@/data/studios";
+import { allStudios, getFeaturedStudios } from "@/data/studios";
 
 export const metadata = {
   title: "StudioSpace — Discover & Book Creative Studios by the Hour",
@@ -13,11 +13,15 @@ export const metadata = {
 
 export default async function HomePage() {
   const featuredStudios = await getFeaturedStudios();
+  const featuredIds = new Set(featuredStudios.map((studio) => studio.id));
+  const moreStudios = allStudios
+    .slice(-3)
+    .filter((studio) => !featuredIds.has(studio.id));
 
   return (
     <>
       <HeroSlider />
-      <FeaturedStudios studios={featuredStudios} />
+      <FeaturedStudios studios={featuredStudios} moreStudios={moreStudios} />
       <CategoryGrid />
       <HowBookingWorks />
       <HostGuarantee />
