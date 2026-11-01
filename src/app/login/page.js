@@ -79,12 +79,19 @@ export default function LoginPage() {
     if (Object.keys(nextErrors).length > 0) return;
 
     setSubmitting(true);
-    const { error } = await authClient.signIn.email({
-      email: form.email.trim(),
-      password: form.password,
-      rememberMe: true,
-    });
-    setSubmitting(false);
+    let error;
+    try {
+      ({ error } = await authClient.signIn.email({
+        email: form.email.trim(),
+        password: form.password,
+        rememberMe: true,
+      }));
+    } catch {
+      toast.error("Unable to reach the sign-in service. Check your connection and try again.");
+      return;
+    } finally {
+      setSubmitting(false);
+    }
 
     if (error) {
       toast.error(error.message || "Invalid email or password.");
@@ -97,17 +104,22 @@ export default function LoginPage() {
 
   async function handleGoogleLogin() {
     setSubmitting(true);
-    const { error } = await authClient.signIn.social({
-      provider: "google",
-      callbackURL: safeRedirect(),
-    });
-    setSubmitting(false);
-    if (error) {
-      toast.error(
-        error.code === "PROVIDER_NOT_FOUND"
-          ? "Google sign-in isn't configured yet — see authentication.md."
-          : error.message || "Google sign-in failed."
-      );
+    try {
+      const { error } = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: safeRedirect(),
+      });
+      if (error) {
+        toast.error(
+          error.code === "PROVIDER_NOT_FOUND"
+            ? "Google sign-in isn't configured yet."
+            : error.message || "Google sign-in failed."
+        );
+      }
+    } catch {
+      toast.error("Unable to start Google sign-in. Check your connection and try again.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
