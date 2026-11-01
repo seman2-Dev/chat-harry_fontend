@@ -2,18 +2,18 @@
 
 > Peer-to-peer creative workspace marketplace — find and book photo studios, podcast rooms, music suites, sound stages and art workshops.
 
-**Live site:** _deployment pending — env setup documented below and in `authentication.md`_
+**Live site:** [cat-harry-wine.vercel.app](https://cat-harry-wine.vercel.app)
 
-Built with **Next.js 16 (App Router)**, **React 19**, **Tailwind CSS v4**, **Better Auth**, and **MongoDB**.
+Built with **Next.js 16 (App Router)**, **React 19**, **Tailwind CSS v4**, **Express 5**, **Better Auth**, and **MongoDB**.
 
 ## Features
 
 - **Home** — 3-slide autoplaying hero (fade), featured studios (MongoDB `limit(6)` with mock-data fallback), browse-by-category deep links, how-booking-works + host guarantee sections.
 - **Browse studios** (`/studios`) — server-rendered grid with category/location/price filters, skeleton loader while streaming.
-- **Studio details** (`/studios/[id]`) — gallery carousel, amenities, overview, host card, reviews, sticky booking sidebar; falls back to seed data when a studio isn't in MongoDB.
+- **Studio details** (`/studios/[id]`) — gallery carousel, amenities, overview, host card, persisted reviews, sticky booking sidebar; falls back to sample listings when a studio isn't in MongoDB.
 - **Book a studio** — modal collects date / start time / duration, computes total client-side, POSTs to `/api/bookings` with the studio snapshot; overlapping slots are rejected server-side.
-- **My bookings** (`/my-bookings`) — status badges (Pending / Confirmed / Cancelled), cancel action (Pending-only, server-enforced).
-- **Host a studio** (`/add-studio`) — shared `StudioForm` with validation + Sonner toasts.
+- **My bookings** (`/my-bookings`) — status badges, pending cancellation, host confirmation and completion transitions.
+- **Host a studio** (`/add-studio`) — shared `StudioForm` with validation, direct image upload through the API, and Sonner toasts.
 - **My listings** (`/my-listings`) — edit / delete with a custom confirm modal (no `alert()`), empty state.
 - **Edit studio** (`/studios/edit/[id]`) — server-fetched data + ownership guard (403 page for non-owners).
 - **Dashboard** (`/dashboard`) — account overview with links to listings/bookings; protected by `src/proxy.js`.
@@ -27,7 +27,8 @@ Built with **Next.js 16 (App Router)**, **React 19**, **Tailwind CSS v4**, **Bet
 
 - **Framework:** Next.js 16.4.3 (App Router, `cacheComponents`, React Compiler, Turbopack)
 - **UI:** React 19, Tailwind CSS v4 (CSS-first `@theme` + `@custom-variant dark`), Swiper 14, Lucide icons, Sonner toasts
-- **Auth:** Better Auth 1.7 (MongoDB adapter, `nextCookies` plugin)
+- **Auth:** Better Auth 1.7 (MongoDB adapter, Express Node handler, HttpOnly sessions)
+- **API:** Express 5 routes for studios, bookings, uploads, wishlists, and reviews; proxied through Next rewrites
 - **Database:** MongoDB driver (no ODM); seed/mock studios in `src/data/studios.js` double as an offline fallback
 
 ## API routes
@@ -37,7 +38,10 @@ Built with **Next.js 16 (App Router)**, **React 19**, **Tailwind CSS v4**, **Bet
 | `/api/studios` | GET (list), POST (create) | POST requires session (401) + full-field validation |
 | `/api/studios/[id]` | GET, PUT, DELETE | owner-only mutations (403 for others) |
 | `/api/bookings` | GET (mine), POST (book) | POST requires session; rejects overlapping Pending/Confirmed slots |
-| `/api/bookings/[id]` | PATCH (cancel) | owner-only; Pending bookings only |
+| `/api/bookings/[id]` | PATCH | guests cancel; studio hosts confirm and complete |
+| `/api/uploads` | POST | authenticated imgbb proxy; requires backend `IMGBB_API_KEY` |
+| `/api/wishlist` | GET, POST, DELETE by studio id | private, user-scoped saved studios |
+| `/api/studios/[id]/reviews` | GET, POST | signed-in user must have a completed booking to review |
 
 ## Local setup
 
@@ -48,6 +52,10 @@ npm run db:start              # starts local mongod (data in .mongodb-data/)
 npm run dev                   # http://localhost:3000
 ```
 
+Start the API in a second terminal from `../cat_harry_backend` with `npm install && npm run dev`.
+Set `API_URL=http://localhost:5000` in the client `.env.local`, and use the same MongoDB URI
+and `BETTER_AUTH_SECRET` in both apps. Set backend `BETTER_AUTH_URL=http://localhost:3000`.
+
 `.env.local` variables (see `.env.example` for comments):
 
 | Variable | Example |
@@ -55,6 +63,7 @@ npm run dev                   # http://localhost:3000
 | `MONGODB_URI` | `mongodb://127.0.0.1:27017/studiospace` |
 | `BETTER_AUTH_SECRET` | `openssl rand -base64 32` |
 | `BETTER_AUTH_URL` | `http://localhost:3000` |
+| `API_URL` | `http://localhost:5000` |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | optional — empty ⇒ Google button shows a "not configured" toast |
 
 Checks (there is no test runner):
@@ -82,9 +91,6 @@ src/
     add-studio/  my-listings/  my-bookings/  dashboard/
     login/  register/       # auth forms + metadata layouts
     about/  how-it-works/  terms/  privacy/
-    api/
-      studios/  bookings/   # REST handlers (session + ownership enforced)
-      auth/[...all]/        # Better Auth HTTP handler
     not-found.js            # custom 404
   components/
     studios/                # StudioForm, StudioDetails, BookingModal, …
@@ -94,7 +100,7 @@ src/
   context/ThemeContext.jsx  # useSyncExternalStore theme store (localStorage)
   data/studios.js           # data layer + 8 enriched seed studios (MongoDB w/ mock fallback)
   data/amenities.js         # AMENITY_OPTIONS (client-safe, no mongodb import)
-  lib/auth.js  auth-client.js  db.js  utils.js
+  lib/auth-client.js  db.js  utils.js
   proxy.js                  # private-route edge guard (cookie presence check)
 public/images/              # hero / studios / categories (Wikimedia Commons)
 ```
