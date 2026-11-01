@@ -44,6 +44,37 @@ export default function StudioForm({ mode = "add", initialData, studioId }) {
   );
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  async function uploadImage(file) {
+    if (!file) return;
+    if (!file.type.startsWith("image/") || file.size > 5 * 1024 * 1024) {
+      toast.error("Choose an image smaller than 5 MB.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const image = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error("Could not read that image."));
+        reader.readAsDataURL(file);
+      });
+      const response = await fetch("/api/uploads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Image upload failed.");
+      update("imageUrl", data.url);
+      toast.success("Image uploaded.");
+    } catch (error) {
+      toast.error(error.message || "Image upload failed.");
+    } finally {
+      setUploading(false);
+    }
+  }
 
   function update(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -261,13 +292,23 @@ export default function StudioForm({ mode = "add", initialData, studioId }) {
             className={inputClasses}
             aria-invalid={Boolean(errors.imageUrl)}
           />
+          <label className="mt-3 inline-flex cursor-pointer items-center rounded-lg border border-zinc-300 px-3.5 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">
+            {uploading ? "Uploading…" : "Upload an image"}
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              disabled={uploading}
+              onChange={(event) => uploadImage(event.target.files?.[0])}
+              className="sr-only"
+            />
+          </label>
           {errors.imageUrl ? (
             <p role="alert" className="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">
               {errors.imageUrl}
             </p>
           ) : (
             <p className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-              Upload to imgbb or postimage and paste the direct link.
+              Upload a photo or paste a direct image URL. Maximum upload size: 5 MB.
             </p>
           )}
         </div>
