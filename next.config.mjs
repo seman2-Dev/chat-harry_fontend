@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
-const API_URL = process.env.API_URL || "http://localhost:5000";
+// Keep production usable when Vercel's API_URL variable is missing. Local
+// development still defaults to the local Express server.
+const API_URL =
+  process.env.API_URL ||
+  (process.env.NODE_ENV === "production"
+    ? "https://cat-harry-backend-sable.vercel.app"
+    : "http://localhost:5000");
 
 const nextConfig = {
   async rewrites() {

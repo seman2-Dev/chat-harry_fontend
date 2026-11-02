@@ -331,7 +331,12 @@ export function normalizeStudio(doc) {
   };
 }
 
-const API_URL = (process.env.API_URL || "http://localhost:5000").replace(/\/$/, "");
+const API_URL = (
+  process.env.API_URL ||
+  (process.env.NODE_ENV === "production"
+    ? "https://cat-harry-backend-sable.vercel.app"
+    : "http://localhost:5000")
+).replace(/\/$/, "");
 
 async function fetchStudiosFromApi(path = "") {
   const response = await fetch(`${API_URL}/api/studios${path}`, {
