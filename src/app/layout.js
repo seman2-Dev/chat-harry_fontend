@@ -5,6 +5,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import Header from "@/components/shared/Header";
 import Footer from "@/components/shared/Footer";
+import StudioBackdrop from "@/components/shared/StudioBackdrop";
 
 // Applied before hydration so the stored theme never flashes light-first.
 // (Kept in sync with STORAGE_KEY in src/context/ThemeContext.jsx.)
@@ -38,14 +39,17 @@ export default function RootLayout({ children }) {
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="flex min-h-full flex-col font-sans">
-        <ThemeProvider>
-          <AuthProvider>
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-            <Toaster position="top-center" richColors closeButton />
-          </AuthProvider>
-        </ThemeProvider>
+        <StudioBackdrop />
+        <div className="site-frame relative z-10 flex min-h-full flex-1 flex-col">
+          <ThemeProvider>
+            <AuthProvider>
+              <Header />
+              <main className="studio-main relative flex-1">{children}</main>
+              <Footer />
+              <Toaster position="top-center" richColors closeButton />
+            </AuthProvider>
+          </ThemeProvider>
+        </div>
       </body>
     </html>
   );
