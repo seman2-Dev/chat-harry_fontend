@@ -59,7 +59,7 @@ export default function StudiosExplorer({ studios }) {
     ? searchParams.get("category")
     : null;
 
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(searchParams.get("q") || "");
   const [category, setCategory] = useState(initialCategory);
   const [sort, setSort] = useState("recommended");
 

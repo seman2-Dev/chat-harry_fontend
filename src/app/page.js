@@ -3,6 +3,7 @@ import FeaturedStudios from "@/components/home/FeaturedStudios";
 import HeroSlider from "@/components/home/HeroSlider";
 import HostGuarantee from "@/components/home/HostGuarantee";
 import HowBookingWorks from "@/components/home/HowBookingWorks";
+import StudioSearch from "@/components/home/StudioSearch";
 import { allStudios, getFeaturedStudios } from "@/data/studios";
 
 export const metadata = {
@@ -21,6 +22,7 @@ export default async function HomePage() {
   return (
     <>
       <HeroSlider />
+      <StudioSearch />
       <FeaturedStudios studios={featuredStudios} moreStudios={moreStudios} />
       <CategoryGrid />
       <HowBookingWorks />

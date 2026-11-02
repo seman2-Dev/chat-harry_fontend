@@ -119,7 +119,7 @@ export default function HeroSlider() {
                     Explore Studios
                   </Link>
                   <Link
-                    href="/studios"
+                    href="/add-studio"
                     className="rounded-lg border border-white/70 px-6 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-white hover:text-zinc-950"
                   >
                     Host Your Space
