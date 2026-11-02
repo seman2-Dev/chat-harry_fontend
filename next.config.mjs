@@ -23,6 +23,7 @@ const nextConfig = {
   },
   experimental: {
     agentFeedback: true,
+    useTypeScriptCli: false,
   },
   cacheComponents: true,
   partialPrefetching: true,

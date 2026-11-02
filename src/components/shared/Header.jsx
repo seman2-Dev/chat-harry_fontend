@@ -20,6 +20,7 @@ const userMenuItems = [
   { label: "Add New Studio", href: "/add-studio" },
   { label: "My Studio Listings", href: "/my-listings" },
   { label: "My Bookings", href: "/my-bookings" },
+  { label: "Saved Studios", href: "/saved-studios" },
 ];
 
 function ApertureIcon({ className = "" }) {

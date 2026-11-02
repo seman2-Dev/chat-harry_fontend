@@ -13,6 +13,8 @@ Built with **Next.js 16 (App Router)**, **React 19**, **Tailwind CSS v4**, **Exp
 - **Studio details** (`/studios/[id]`) — gallery carousel, amenities, overview, host card, persisted reviews, sticky booking sidebar; falls back to sample listings when a studio isn't in MongoDB.
 - **Book a studio** — modal collects date / start time / duration, computes total client-side, POSTs to `/api/bookings` with the studio snapshot; overlapping slots are rejected server-side.
 - **My bookings** (`/my-bookings`) — status badges, pending cancellation, host confirmation and completion transitions.
+- **Booking receipts** — confirmed bookings include a print-ready receipt that can be saved as PDF.
+- **Saved studios** (`/saved-studios`) — heart studio cards to maintain a MongoDB-backed, private wishlist.
 - **Host a studio** (`/add-studio`) — shared `StudioForm` with validation, direct image upload through the API, and Sonner toasts.
 - **My listings** (`/my-listings`) — edit / delete with a custom confirm modal (no `alert()`), empty state.
 - **Edit studio** (`/studios/edit/[id]`) — server-fetched data + ownership guard (403 page for non-owners).

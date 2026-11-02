@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import PasswordVisibilityToggle from "@/components/shared/PasswordVisibilityToggle";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const URL_RE = /^https?:\/\/\S+$/i;
@@ -45,6 +46,7 @@ export default function RegisterPage() {
   });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   function update(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -224,16 +226,22 @@ export default function RegisterPage() {
             >
               Password
             </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              value={form.password}
-              onChange={(event) => update("password", event.target.value)}
-              placeholder="••••••••"
-              className={inputClasses}
-              aria-invalid={Boolean(errors.password)}
-            />
+            <div className="relative mt-1.5">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                value={form.password}
+                onChange={(event) => update("password", event.target.value)}
+                placeholder="••••••••"
+                className={`${inputClasses} mt-0 pr-11`}
+                aria-invalid={Boolean(errors.password)}
+              />
+              <PasswordVisibilityToggle
+                visible={showPassword}
+                onToggle={() => setShowPassword((visible) => !visible)}
+              />
+            </div>
             {errors.password ? (
               <p role="alert" className="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">
                 {errors.password}

@@ -53,14 +53,13 @@ export default function MyListingsPage() {
     // guarded by a cancellation flag (react-hooks/set-state-in-effect).
     let ignore = false;
     (async () => {
-      const response = await fetch("/api/studios").catch(() => null);
+      const response = await fetch(
+        `/api/studios?owner=${encodeURIComponent(user.email)}`
+      ).catch(() => null);
       if (ignore) return;
       if (response?.ok) {
         const data = await response.json().catch(() => ({}));
-        const mine = (data.studios ?? []).filter(
-          (studio) => studio.ownerEmail === user.email
-        );
-        setStudios(mine);
+        setStudios(data.studios ?? []);
       } else {
         toast.error("Could not load your listings.");
       }

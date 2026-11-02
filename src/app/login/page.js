@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import PasswordVisibilityToggle from "@/components/shared/PasswordVisibilityToggle";
 
 function ApertureIcon({ className = "" }) {
   return (
@@ -54,6 +55,7 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   function update(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -187,16 +189,22 @@ export default function LoginPage() {
                 Forgot Password?
               </button>
             </div>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              value={form.password}
-              onChange={(event) => update("password", event.target.value)}
-              placeholder="••••••••"
-              className="mt-1.5 w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"
-              aria-invalid={Boolean(errors.password)}
-            />
+            <div className="relative mt-1.5">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                value={form.password}
+                onChange={(event) => update("password", event.target.value)}
+                placeholder="••••••••"
+                className="w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 pr-11 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white"
+                aria-invalid={Boolean(errors.password)}
+              />
+              <PasswordVisibilityToggle
+                visible={showPassword}
+                onToggle={() => setShowPassword((visible) => !visible)}
+              />
+            </div>
             {errors.password && (
               <p role="alert" className="mt-1.5 text-xs font-medium text-red-600 dark:text-red-400">
                 {errors.password}

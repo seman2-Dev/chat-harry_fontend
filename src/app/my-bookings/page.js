@@ -9,6 +9,7 @@ import ConfirmModal from "@/components/shared/ConfirmModal";
 import EmptyState from "@/components/shared/EmptyState";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { useAuth } from "@/context/AuthContext";
+import BookingReceiptButton from "@/components/bookings/BookingReceiptButton";
 import { authenticatedFetch } from "@/lib/auth-client";
 
 function BookingsSkeleton() {
@@ -211,6 +212,9 @@ export default function MyBookingsPage() {
                       Cancel Booking
                     </button>
                   ) : null}
+                  {booking.status === "Confirmed" && (
+                    <BookingReceiptButton booking={booking} />
+                  )}
                 </li>
               ))}
             </ul>
