@@ -8,6 +8,7 @@ import RequireAuth from "@/components/auth/RequireAuth";
 import ConfirmModal from "@/components/shared/ConfirmModal";
 import EmptyState from "@/components/shared/EmptyState";
 import { useAuth } from "@/context/AuthContext";
+import { authenticatedFetch } from "@/lib/auth-client";
 
 function ListingsSkeleton() {
   return (
@@ -73,7 +74,7 @@ export default function MyListingsPage() {
   async function handleDelete() {
     if (!pendingDelete) return;
     setDeleting(true);
-    const response = await fetch(`/api/studios/${pendingDelete._id}`, {
+    const response = await authenticatedFetch(`/api/studios/${pendingDelete._id}`, {
       method: "DELETE",
     }).catch(() => null);
     setDeleting(false);

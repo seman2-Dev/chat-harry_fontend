@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { AMENITY_OPTIONS } from "@/data/amenities";
 import { studioCategories } from "@/data/categories";
+import { authenticatedFetch } from "@/lib/auth-client";
 
 const inputClasses =
   "mt-1.5 w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white";
@@ -116,7 +117,7 @@ export default function StudioForm({ mode = "add", initialData, studioId }) {
     setSubmitting(true);
     const endpoint = mode === "edit" ? `/api/studios/${studioId}` : "/api/studios";
     const method = mode === "edit" ? "PUT" : "POST";
-    const response = await fetch(endpoint, {
+    const response = await authenticatedFetch(endpoint, {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

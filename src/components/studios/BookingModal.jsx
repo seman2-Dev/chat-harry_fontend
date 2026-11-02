@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { authenticatedFetch } from "@/lib/auth-client";
 
 const TIME_SLOTS = Array.from({ length: 16 }, (_, index) => {
   const hour = index + 6; // 06:00 – 21:00
@@ -42,7 +43,7 @@ export default function BookingModal({ studio, open, onClose }) {
       return;
     }
     setSubmitting(true);
-    const response = await fetch("/api/bookings", {
+    const response = await authenticatedFetch("/api/bookings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

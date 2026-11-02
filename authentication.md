@@ -2,6 +2,30 @@
 
 StudioSpace uses [Better Auth](https://www.better-auth.com/) 1.7.x with MongoDB.
 
+## JWT access for protected API mutations
+
+The browser sign-in flow continues to use Better Auth's `HttpOnly` session cookie.
+The Express auth configuration also enables Better Auth's JWT plugin, which issues
+short-lived (15 minute), EdDSA-signed access JWTs from `/api/auth/token` and publishes
+the matching public keys at `/api/auth/jwks`. Its issuer and audience are both the
+configured `BETTER_AUTH_URL` (the public frontend origin).
+
+`authenticatedFetch` in `src/lib/auth-client.js` requests a JWT using the current
+session and attaches it as `Authorization: Bearer …` for studio and booking mutations. It keeps the JWT
+in memory only; it is never written to local storage or exposed as a persistent cookie.
+Express `requireAuth` verifies bearer JWT signatures against the Better Auth JWKS and
+checks issuer, audience, algorithm, expiry, subject, and email before authorizing. A
+malformed or invalid bearer token is rejected with 401 even if a cookie is also present.
+Requests without a bearer token continue through the existing Better Auth session
+validation, preserving older clients and cookie-based sign-in. This is an additive JWT
+access-token layer, not a replacement for the HttpOnly session.
+
+The JWT plugin stores its signing keys in the existing MongoDB database. Both apps and
+deployments must continue to point at the same `studiospace` database, and the backend's
+`BETTER_AUTH_URL` must exactly match the issuer configured by the frontend browser.
+JWTs expire after 15 minutes; a signed-in browser obtains a fresh token for each
+protected mutation through its still-valid session cookie.
+
 **Current integration:** Express in `../cat_harry_backend` owns `/api/auth/*`; this app proxies
 that path to the API. Put Google credentials in the backend `.env` (`GOOGLE_CLIENT_ID` /
 `GOOGLE_CLIENT_SECRET`, or the `BETTER_AUTH_GOOGLE_*` aliases). Set backend

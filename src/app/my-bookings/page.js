@@ -9,6 +9,7 @@ import ConfirmModal from "@/components/shared/ConfirmModal";
 import EmptyState from "@/components/shared/EmptyState";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { useAuth } from "@/context/AuthContext";
+import { authenticatedFetch } from "@/lib/auth-client";
 
 function BookingsSkeleton() {
   return (
@@ -72,7 +73,7 @@ export default function MyBookingsPage() {
   async function handleCancel() {
     if (!pendingCancel) return;
     setCancelling(true);
-    const response = await fetch(`/api/bookings/${pendingCancel._id}`, {
+    const response = await authenticatedFetch(`/api/bookings/${pendingCancel._id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: "Cancelled" }),
@@ -99,7 +100,7 @@ export default function MyBookingsPage() {
   }
 
   async function updateHostStatus(booking, status) {
-    const response = await fetch(`/api/bookings/${booking._id}`, {
+    const response = await authenticatedFetch(`/api/bookings/${booking._id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
