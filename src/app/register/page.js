@@ -110,8 +110,10 @@ export default function RegisterPage() {
       toast.error(error.message || "Registration failed. Please try again.");
       return;
     }
+    // Requirments.md: successful registration navigates to the Login page.
     toast.success("Account created! Please sign in.");
     router.push("/login");
+    router.refresh();
   }
 
   async function handleGoogleRegister() {

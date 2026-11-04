@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
+import { useAuth } from "@/context/AuthContext";
 import PasswordVisibilityToggle from "@/components/shared/PasswordVisibilityToggle";
 
 function ApertureIcon({ className = "" }) {
@@ -52,6 +53,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function LoginPage() {
   const router = useRouter();
+  const { refreshSession } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -99,6 +101,7 @@ export default function LoginPage() {
       toast.error(error.message || "Invalid email or password.");
       return;
     }
+    await refreshSession();
     toast.success("Logged in successfully");
     router.push(safeRedirect());
     router.refresh();

@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import { safeOptionalImageSrc } from "@/lib/images";
 import { toast } from "sonner";
 
 const AuthContext = createContext(null);
@@ -9,12 +10,12 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   // Client-side session read — keeps the layout's static shell intact under
   // Cache Components (no cookies() read in a server layout).
-  const { data, isPending } = authClient.useSession();
+  const { data, isPending, refetch: refreshSession } = authClient.useSession();
   const user = data?.user
     ? {
         name: data.user.name,
         email: data.user.email,
-        image: data.user.image ?? null,
+        image: safeOptionalImageSrc(data.user.image),
       }
     : null;
   const [savedStudios, setSavedStudios] = useState([]);
@@ -76,10 +77,9 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider
       value={{
         user,
-        session: data,
         isPending,
+        refreshSession,
         logout,
-        authClient,
         savedStudios: savedForEmail === user?.email ? savedStudios : [],
         toggleSavedStudio,
       }}
