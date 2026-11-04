@@ -14,17 +14,18 @@ Next.js 16.4.3 App Router for assignment 8: rebuild it as **StudioSpace**, a pee
 
 - JavaScript only (`jsconfig.json`); no TypeScript, no tests, no typecheck script.
 - `next.config.mjs` enables `cacheComponents`, `partialPrefetching`, `reactCompiler` (babel-plugin-react-compiler), and `experimental.agentFeedback`; Tailwind v4 via the `@tailwindcss/turbopack` loader rule with `@import "tailwindcss"` + `@theme` in `src/app/globals.css`, and no `tailwind.config.js`. Path alias: `@/*` → `./src/*`.
-- Client API calls use Next rewrites to the Express service; home, explore, detail, and edit server components fetch studio data from that API through `src/data/studios.js` (15 local sample studios remain as a fallback).
+- Client API calls use Next rewrites to the Express service (`API_URL`: `http://localhost:5000` in dev, hardcoded Vercel URL in production); home, explore, detail, and edit server components fetch studio data from that API through `src/data/studios.js` (15 local sample studios remain as a fallback).
+- Auth: `/api/auth/*` is rewritten to Express, which owns Better Auth; there is no local Next auth route (the old `src/app/api/auth/[...all]/route.js` + `src/lib/auth.js` pair was removed — the rewrite shadows it anyway, and `MONGO_URI` crashed the build). `src/proxy.js` is Next 16's middleware (renamed from Middleware): optimistic `better-auth.session_token` cookie check only; real enforcement is `RequireAuth` + API 401s.
 
 ## Commands
 
 ```bash
-cp .env.example .env.local && npm install
-npm run db:start   # local mongod, data in .mongodb-data/
+npm install            # a populated gitignored .env is required; .env.example was deleted (b314ae8)
+npm run db:start       # local mongod, data in .mongodb-data/ (used only if .env points at it)
 npm run db:stop
-npm run dev         # :3000
-npm run lint        # eslint flat config (eslint.config.mjs); the only check available
-npm run build       # no DB needed
+npm run dev            # :3000
+npm run lint           # eslint flat config (eslint.config.mjs); passes
+npm run build          # passes — the dead /api/auth/[...all] route and src/lib/auth.js (MONGO_URI crash) were removed; Express owns /api/auth/* via the rewrite
 ```
 
 No test runner exists — verify changes with `npm run lint && npm run build`.
@@ -37,4 +38,6 @@ No test runner exists — verify changes with `npm run lint && npm run build`.
 
 ## Git
 
-This folder is its own git repo root (verified via `git rev-parse --show-toplevel`), not the PH-B14 course monorepo root. The working tree contains unrelated changes across other milestones. Always commit from here and stage explicit paths — never `git add -A` / `git add .`.
+This folder is its own git repo root (`git rev-parse --show-toplevel` → this directory; remote `chat-harry_fontend`), not the PH-B14 course monorepo root — the assignment-8 parent has an empty `.git/` that silently resolves to the course repo. Always commit from here and stage explicit paths — never `git add -A` / `git add .`.
+
+`.gitignore` now lists `AGENTS.md` (tooling appended it), but the file is tracked, so the rule is inert — commit `AGENTS.md` changes anyway to keep the `nextjs-agent-rules` block in sync.

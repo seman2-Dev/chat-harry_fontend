@@ -20,9 +20,9 @@ Requests without a bearer token continue through the existing Better Auth sessio
 validation, preserving older clients and cookie-based sign-in. This is an additive JWT
 access-token layer, not a replacement for the HttpOnly session.
 
-The JWT plugin stores its signing keys in the existing MongoDB database. Both apps and
-deployments must continue to point at the same `studiospace` database, and the backend's
-`BETTER_AUTH_URL` must exactly match the issuer configured by the frontend browser.
+The JWT plugin stores its signing keys in the existing MongoDB database. The backend must
+point at the `studiospace` database, and its `BETTER_AUTH_URL` must exactly match the public
+frontend origin used by the browser.
 JWTs expire after 15 minutes; a signed-in browser obtains a fresh token for each
 protected mutation through its still-valid session cookie.
 
@@ -36,23 +36,24 @@ Cloud must allow `http://localhost:3000/api/auth/callback/google` as an authoriz
 
 | Piece | File(s) | Status |
 | --- | --- | --- |
-| Server config (MongoDB adapter, `minPasswordLength: 6`, `autoSignIn: false`, conditional Google) | `../cat_harry_backend/src/auth.js` | ✅ |
-| Auth HTTP routes (`/api/auth/*`) | `../cat_harry_backend/src/app.js` | ✅ |
+| Server config (MongoDB adapter, `minPasswordLength: 6`, `autoSignIn: false`, conditional Google) | `../cat_harry_backend/index.js` | ✅ |
+| Auth HTTP routes (`/api/auth/*`) | `../cat_harry_backend/index.js` | ✅ |
 | React client (`useSession`, `signIn`, `signUp`, `signOut`) | `src/lib/auth-client.js` | ✅ |
 | Session context (`user`, `isPending`, `logout`) | `src/context/AuthContext.jsx` | ✅ |
 | Header: pending skeleton, avatar dropdown, async logout | `src/components/shared/Header.jsx` | ✅ |
 | Login form (Email, Password, Forgot Password, Login, Register link, Google) | `src/app/login/page.js` | ✅ |
 | Register form (Name, Email, Photo URL, Password + client rules, Google) | `src/app/register/page.js` | ✅ |
 | Metadata for auth pages | `src/app/login/layout.js`, `src/app/register/layout.js` | ✅ |
-| Client/API env | `.env.local` (`API_URL`, shared DB and auth secret) | ✅ |
+| Client/API env | Frontend `.env.local` points `API_URL` at Express; backend `.env` owns Better Auth, MongoDB, and its secret | ✅ |
+| Auth route ownership | Express serves `/api/auth/*`; Next rewrites that path to the API | ✅ |
 | Google provider credentials | `../cat_harry_backend/.env` | ✅ |
 | Local MongoDB | `npm run db:start` / `npm run db:stop` | ✅ |
 
 Verified with `curl` against a running server:
 
-- Sign-up valid → `200`, user + image persisted to `user`/`account` collections, `token: null` (autoSignIn off → user lands on Login, per rubric).
+- Sign-up valid → `200`, user + image persisted to `user`/`account` collections, no session (`autoSignIn: false`); the client shows a success toast and navigates to Login.
 - Sign-up weak password → `400 PASSWORD_TOO_SHORT` (server) + blocked client-side.
-- Sign-up duplicate email → `200` with a **synthetic** user, no duplicate row created. This is deliberate Better Auth anti-enumeration behavior when `autoSignIn: false` (see Gotchas). Registration "succeeds"; the truth is decided at login.
+- Duplicate email → Better Auth reports a registration error; the client displays it without changing the current session.
 - Sign-in correct → `200`, `better-auth.session_token` cookie set with `HttpOnly` flag.
 - Sign-in wrong password / unknown email → `401` with generic "Invalid email or password" (no user enumeration).
 - `get-session` with cookie → returns session + user; after `sign-out` (+ `Origin` header) → `null`.
@@ -199,9 +200,9 @@ curl -s -X POST http://localhost:3000/api/auth/sign-up/email \
 
 ## Gotchas learned the hard way
 
-1. **`autoSignIn: false` (we set this so Register → Login page) makes Better Auth return a generic success for duplicate emails** — it generates a synthetic user response instead of `USER_ALREADY_EXISTS` to prevent account enumeration. No duplicate is written to the DB. Do not "fix" this by removing `autoSignIn`; handle the truth at login time.
+1. **`autoSignIn: false` (Requirments.md)** — registration does not create a session; the register page navigates to `/login` so the examiner can sign in explicitly.
 2. **`sign-out` requires an `Origin` header** (CSRF protection). Browsers send it automatically; raw `curl` needs `-H "Origin: http://localhost:3000"` and `-d '{}'`.
-3. **Password rules**: `minPasswordLength: 6` in `src/lib/auth.js` matches the rubric (default is 8). Uppercase/lowercase rules are client-side only; server enforces length.
+3. **Password rules**: `minPasswordLength: 6` in `../cat_harry_backend/index.js` matches the rubric (default is 8). Uppercase/lowercase rules are client-side only; server enforces length.
 4. **Collection names are singular**: `user`, `account` (no `usePlural`). Inspect with `mongosh mongodb://127.0.0.1:27017/studiospace --eval 'db.user.countDocuments()'`.
 5. **Standalone MongoDB**: pass only the db object to `mongodbAdapter(db)` (no client arg) so transactions are disabled — required for `mongod` without a replica set.
 6. **`cacheComponents` (Next 16)**: any server-side `auth.api.getSession()` inside a page must sit behind `<Suspense>` or the prerender aborts with "Route ... used new Date()..." / dynamic-API errors. That is why the Header uses the *client* `useSession()` — no Suspense needed there.

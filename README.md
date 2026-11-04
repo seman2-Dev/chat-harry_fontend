@@ -19,7 +19,7 @@ Built with **Next.js 16 (App Router)**, **React 19**, **Tailwind CSS v4**, **Exp
 - **My listings** (`/my-listings`) — edit / delete with a custom confirm modal (no `alert()`), empty state.
 - **Edit studio** (`/studios/edit/[id]`) — server-fetched data + ownership guard (403 page for non-owners).
 - **Dashboard** (`/dashboard`) — account overview with links to listings/bookings; protected by `src/proxy.js`.
-- **Auth** — Better Auth email/password (register → login, password rules, toasts on every failure path), Google sign-in one env-var away (see `authentication.md`), avatar dropdown, `HttpOnly` session cookies.
+- **Auth** — Better Auth email/password (registration redirects to Login per the brief, password rules, toasts on every failure path), Google sign-in one env-var away (see `authentication.md`), avatar dropdown, `HttpOnly` session cookies.
 - **Theme toggle** — light/dark switch persisted to `localStorage` (`studiospace-theme`); initial script in the root layout paints the right theme before hydration (no flash).
 - **404** — custom illustration page for unknown routes.
 - **Private routes** — `RequireAuth` waits for `isPending` before redirecting, so a logged-in user reloading `/dashboard` is never bounced to `/login`.
@@ -48,25 +48,26 @@ Built with **Next.js 16 (App Router)**, **React 19**, **Tailwind CSS v4**, **Exp
 ## Local setup
 
 ```bash
-cp .env.example .env.local    # then edit the values
 npm install
+# Create a gitignored .env (or .env.local) with at least:
+#   API_URL=http://localhost:5000
 npm run db:start              # starts local mongod (data in .mongodb-data/)
 npm run dev                   # http://localhost:3000
 ```
 
 Start the API in a second terminal from `../cat_harry_backend` with `npm install && npm run dev`.
-Set `API_URL=http://localhost:5000` in the client `.env.local`, and use the same MongoDB URI
-and `BETTER_AUTH_SECRET` in both apps. Set backend `BETTER_AUTH_URL=http://localhost:3000`.
+Set `API_URL=http://localhost:5000` in the frontend `.env`. Configure `MONGODB_URI`,
+`BETTER_AUTH_SECRET`, `BETTER_AUTH_URL=http://localhost:3000`, and
+`CLIENT_ORIGINS=http://localhost:3000` in the backend `.env`.
 
-`.env.local` variables (see `.env.example` for comments):
+Frontend `.env` variables:
 
 | Variable | Example |
 | --- | --- |
-| `MONGODB_URI` | `mongodb://127.0.0.1:27017/studiospace` |
-| `BETTER_AUTH_SECRET` | `openssl rand -base64 32` |
-| `BETTER_AUTH_URL` | `http://localhost:3000` |
 | `API_URL` | `http://localhost:5000` |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | optional — empty ⇒ Google button shows a "not configured" toast |
+
+Google OAuth credentials belong in the backend `.env`; the Google Cloud callback must be
+`http://localhost:3000/api/auth/callback/google`.
 
 Checks (there is no test runner):
 
