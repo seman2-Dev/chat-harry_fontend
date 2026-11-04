@@ -2,10 +2,7 @@
 // rows keep the catalog usable when the API is empty or unavailable.
 
 import { connection } from "next/server";
-import { AMENITY_OPTIONS } from "@/data/amenities";
-
-// Re-exported for server components that already import from this module.
-export { AMENITY_OPTIONS };
+import { safeImageSrc } from "@/lib/images";
 
 export const allStudios = [
   {
@@ -314,11 +311,11 @@ export function normalizeStudio(doc) {
     rating: doc.rating == null ? null : Number(doc.rating),
     reviewCount: Number(doc.reviewCount) || 0,
     location: doc.location,
-    image: doc.imageUrl || doc.image || "/images/studios/product-studio.jpg",
+    image: safeImageSrc(doc.imageUrl || doc.image),
     gallery:
       Array.isArray(doc.gallery) && doc.gallery.length > 0
-        ? doc.gallery
-        : [doc.imageUrl || doc.image || "/images/studios/product-studio.jpg"],
+        ? doc.gallery.map((entry) => safeImageSrc(entry))
+        : [safeImageSrc(doc.imageUrl || doc.image)],
     alt: doc.alt || doc.title,
     overview: doc.overview || "",
     amenities: Array.isArray(doc.amenities) ? doc.amenities : [],
@@ -362,15 +359,23 @@ export async function getAllStudios() {
 
 export async function getFeaturedStudios() {
   await connection();
+  let fromApi = [];
   try {
     // Rubric: newest or top-rated studios, limited to 6.
     const data = await fetchStudiosFromApi("/featured");
-    if (data?.studios?.length > 0) return data.studios.slice(0, 6).map(normalizeStudio);
+    if (data?.studios?.length > 0) fromApi = data.studios.map(normalizeStudio);
   } catch {
-    // API unavailable or empty → fall back to the local sample data.
+    // API unavailable → fall through to the local sample data.
   }
-  // Mock fallback: newest first (array order), then fill with top-rated.
-  return allStudios.slice(0, 6);
+  // Always surface 6 cards: API/MongoDB first (newest), then top-rated samples.
+  const featured = fromApi.slice(0, 6);
+  if (featured.length >= 6) return featured;
+  const seen = new Set(featured.map((studio) => studio.id));
+  const seenTitles = new Set(featured.map((studio) => studio.title.toLowerCase()));
+  const fillers = [...allStudios]
+    .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
+    .filter((studio) => !seen.has(studio.id) && !seenTitles.has(studio.title.toLowerCase()));
+  return [...featured, ...fillers].slice(0, 6);
 }
 
 export async function getStudioById(id) {
@@ -382,14 +387,4 @@ export async function getStudioById(id) {
     // API unavailable → fall back to the local sample data.
   }
   return allStudios.find((studio) => studio.id === id) || null;
-}
-
-export async function getStudiosByOwner(ownerEmail) {
-  await connection();
-  try {
-    const data = await fetchStudiosFromApi(`?owner=${encodeURIComponent(ownerEmail)}&limit=100`);
-    return (data?.studios ?? []).map(normalizeStudio);
-  } catch {
-    return [];
-  }
 }

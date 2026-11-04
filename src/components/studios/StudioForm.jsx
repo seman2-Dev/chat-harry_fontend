@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { AMENITY_OPTIONS } from "@/data/amenities";
 import { studioCategories } from "@/data/categories";
 import { authenticatedFetch } from "@/lib/auth-client";
+import { isSafeImageSrc } from "@/lib/images";
 
 const inputClasses =
   "mt-1.5 w-full rounded-lg border border-zinc-300 bg-white px-3.5 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white";
@@ -103,6 +104,8 @@ export default function StudioForm({ mode = "add", initialData, studioId }) {
     if (!form.imageUrl.trim()) nextErrors.imageUrl = "Image URL is required.";
     else if (!URL_RE.test(form.imageUrl.trim()))
       nextErrors.imageUrl = "Enter a valid URL (https://…).";
+    else if (!isSafeImageSrc(form.imageUrl.trim()))
+      nextErrors.imageUrl = "Use a public https image URL — not localhost or a private IP.";
     if (form.overview.trim().length < 20)
       nextErrors.overview = "Overview must be at least 20 characters.";
     return nextErrors;

@@ -11,6 +11,7 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import { useAuth } from "@/context/AuthContext";
 import BookingReceiptButton from "@/components/bookings/BookingReceiptButton";
 import { authenticatedFetch } from "@/lib/auth-client";
+import { safeImageSrc } from "@/lib/images";
 
 function BookingsSkeleton() {
   return (
@@ -156,7 +157,7 @@ export default function MyBookingsPage() {
                 >
                   <span className="relative h-20 w-full shrink-0 overflow-hidden rounded-xl bg-zinc-200 sm:w-28 dark:bg-zinc-800">
                     <Image
-                      src={booking.studioImage || "/images/studios/product-studio.jpg"}
+                      src={safeImageSrc(booking.studioImage)}
                       alt={booking.studioTitle}
                       fill
                       sizes="112px"

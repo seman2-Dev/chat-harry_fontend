@@ -9,6 +9,7 @@ import ConfirmModal from "@/components/shared/ConfirmModal";
 import EmptyState from "@/components/shared/EmptyState";
 import { useAuth } from "@/context/AuthContext";
 import { authenticatedFetch } from "@/lib/auth-client";
+import { safeImageSrc } from "@/lib/images";
 
 function ListingsSkeleton() {
   return (
@@ -134,7 +135,7 @@ export default function MyListingsPage() {
                 >
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-zinc-200 dark:bg-zinc-800">
                     <Image
-                      src={studio.imageUrl || "/images/studios/product-studio.jpg"}
+                      src={safeImageSrc(studio.imageUrl)}
                       alt={studio.title}
                       fill
                       sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"

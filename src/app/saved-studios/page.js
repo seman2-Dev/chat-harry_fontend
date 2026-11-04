@@ -4,13 +4,14 @@ import RequireAuth from "@/components/auth/RequireAuth";
 import EmptyState from "@/components/shared/EmptyState";
 import StudioCard from "@/components/shared/StudioCard";
 import { useAuth } from "@/context/AuthContext";
+import { safeImageSrc } from "@/lib/images";
 
 export default function SavedStudiosPage() {
   const { savedStudios } = useAuth();
   const studios = savedStudios.map(({ studio, studioId }) => ({
     ...studio,
     id: studioId,
-    image: studio.imageUrl || "/images/studios/product-studio.jpg",
+    image: safeImageSrc(studio.imageUrl),
   }));
 
   return (
